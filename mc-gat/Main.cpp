@@ -72,6 +72,9 @@ void Main() {
 	Array<Texture> textures;
 	String fileDir;
 
+	int beforeFrame = 0;
+	int nowFrame = 0;
+
 	while (System::Update()) {
 		// ファイル読み込み (ボタン押下)
 		if (gui.button(L"fileOpen").pushed) {
@@ -84,7 +87,8 @@ void Main() {
 			if (!res.files.empty()) {
 				fileDir = res.directory;
 
-				loadImages(res.files, images, textures, Vec2(Window::Width() - gui.getRect().w, Window::Height()) * 0.9);
+				if (loadImages(res.files, images, textures, Vec2(Window::Width() - gui.getRect().w, Window::Height()) * 0.9))
+					nowFrame = 0;
 			}
 		}
 		// ファイル読み込み (D&D)
@@ -96,8 +100,27 @@ void Main() {
 			if (!pathes.empty()) {
 				fileDir = FileSystem::ParentPath(pathes[0]);
 
-				loadImages(pathes, images, textures, Vec2(Window::Width() - gui.getRect().w, Window::Height()) * 0.9);
+				if (loadImages(pathes, images, textures, Vec2(Window::Width() - gui.getRect().w, Window::Height()) * 0.9))
+					nowFrame = 0;
 			}
+		}
+
+		// プレビューのFPS設定
+		if (gui.slider(L"fpsSetter").hasChanged) {
+			previewFPS = gui.slider(L"fpsSetter").valueInt;
+			gui.text(L"fpsValue").text = ToString(previewFPS);
+		}
+		// プレビューの描画
+		if (!images.empty()) {
+			++beforeFrame;
+			if (beforeFrame > 60 - previewFPS) {
+				beforeFrame = 0;
+				++nowFrame;
+				if (nowFrame >= textures.size())
+					nowFrame = 0;
+			}
+
+			textures[nowFrame].drawAt(Vec2(gui.getRect().w + Window::Width(), Window::Height()) / 2.0);
 		}
 	}
 }
